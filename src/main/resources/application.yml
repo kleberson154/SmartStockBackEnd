@@ -2,5 +2,5 @@ spring:
   application:
     name: smartstock-api
 
-    profiles:
-      active: dev
+  profiles:
+    active: dev
