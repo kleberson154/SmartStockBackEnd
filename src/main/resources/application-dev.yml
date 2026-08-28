@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/smartstock
-    username: postgres
-    password: postgres
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smartstock}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
 
   jpa:
     hibernate:
@@ -29,5 +29,5 @@ springdoc:
 app:
   security:
     jwt:
-      secret: smartstock-super-secret-key-change-this-in-production-123456789
-      expiration: 86400000
+      secret: ${JWT_SECRET:smartstock-local-development-secret-key-123456789}
+      expiration: ${JWT_EXPIRATION:86400000}
