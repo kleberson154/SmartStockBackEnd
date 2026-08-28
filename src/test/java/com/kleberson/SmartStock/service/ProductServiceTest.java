@@ -7,7 +7,6 @@ import com.kleberson.SmartStock.entity.Product;
 import com.kleberson.SmartStock.exception.ProductAlreadyExistsException;
 import com.kleberson.SmartStock.exception.ProductNotFoundException;
 import com.kleberson.SmartStock.repository.ProductRepository;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

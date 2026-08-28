@@ -1,8 +1,5 @@
 package com.kleberson.SmartStock.dto.product;
 
-import com.kleberson.SmartStock.entity.Product;
-import com.kleberson.SmartStock.exception.ProductAlreadyExistsException;
-import com.kleberson.SmartStock.repository.ProductRepository;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
