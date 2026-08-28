@@ -85,6 +85,14 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
 
+        Product productWithSameCode = productRepository.findByCode(request.getCode())
+                .filter(p -> !p.getId().equals(id))
+                .orElse(null);
+
+        if (productWithSameCode != null) {
+            throw new ProductAlreadyExistsException("Product with code " + request.getCode() + " already exists.");
+        }
+
         product.setName(request.getName());
         product.setCode(request.getCode());
         product.setCategory(request.getCategory());
