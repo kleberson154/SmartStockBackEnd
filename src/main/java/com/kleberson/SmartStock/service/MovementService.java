@@ -11,6 +11,8 @@ import com.kleberson.SmartStock.repository.MovementRepository;
 import com.kleberson.SmartStock.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +24,18 @@ public class MovementService {
     private final MovementRepository movementRepository;
     private final ProductRepository productRepository;
 
+    private MovementResponse toResponse(Movement movement) {
+        return new MovementResponse(
+                movement.getId(),
+                movement.getType(),
+                movement.getQuantity(),
+                movement.getObservation(),
+                movement.getProduct().getId(),
+                movement.getProduct().getName(),
+                movement.getCreatedAt()
+        );
+    }
+
     @Transactional
     public MovementResponse create(MovementCreateRequest request) {
         Product product = productRepository.findById(request.getProductId())
@@ -29,10 +43,10 @@ public class MovementService {
                         "Product with ID " + request.getProductId() + " not found."
                 ));
 
-        if(request.getType() == MovementType.ENTRY){
+        if (request.getType() == MovementType.ENTRY) {
             product.setQuantity(product.getQuantity() + request.getQuantity());
-        } else if (request.getType() == MovementType.EXIT){
-            if (product.getQuantity() < request.getQuantity()){
+        } else if (request.getType() == MovementType.EXIT) {
+            if (product.getQuantity() < request.getQuantity()) {
                 throw new InsufficientStockException(
                         "Insufficient stock for product " + product.getName()
                 );
@@ -51,29 +65,13 @@ public class MovementService {
         productRepository.save(product);
         Movement savedMovement = movementRepository.save(movement);
 
-        return new MovementResponse(
-                savedMovement.getId(),
-                savedMovement.getType(),
-                savedMovement.getQuantity(),
-                savedMovement.getObservation(),
-                product.getId(),
-                product.getName(),
-                savedMovement.getCreatedAt()
-        );
+        return toResponse(savedMovement);
     }
 
-    public List<MovementResponse> findAll() {
-        return movementRepository.findAll()
-                .stream()
-                .map(movement -> new MovementResponse(
-                movement.getId(),
-                movement.getType(),
-                movement.getQuantity(),
-                movement.getObservation(),
-                movement.getProduct().getId(),
-                movement.getProduct().getName(),
-                movement.getCreatedAt()
-        )).toList();
+    public Page<MovementResponse> findAll(Pageable pageable) {
+        return movementRepository
+                .findAll(pageable)
+                .map(this::toResponse);
     }
 
     public List<MovementResponse> findByProductId(UUID productId) {
@@ -83,14 +81,7 @@ public class MovementService {
 
         return movementRepository.findByProductId(productId)
                 .stream()
-                .map(movement -> new MovementResponse(
-                        movement.getId(),
-                        movement.getType(),
-                        movement.getQuantity(),
-                        movement.getObservation(),
-                        movement.getProduct().getId(),
-                        movement.getProduct().getName(),
-                        movement.getCreatedAt()
-                )).toList();
+                .map(this::toResponse)
+                .toList();
     }
 }
