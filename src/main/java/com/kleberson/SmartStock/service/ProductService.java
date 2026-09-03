@@ -8,6 +8,8 @@ import com.kleberson.SmartStock.exception.ProductAlreadyExistsException;
 import com.kleberson.SmartStock.exception.ProductNotFoundException;
 import com.kleberson.SmartStock.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,55 +20,7 @@ import java.util.UUID;
 public class ProductService {
     private final ProductRepository productRepository;
 
-    public ProductResponse create(ProductCreateRequest productCreateRequest) {
-            if(productRepository.findByCode(productCreateRequest.getCode()).isPresent()){
-                throw new ProductAlreadyExistsException("Product with code " + productCreateRequest.getCode() + " already exists.");
-            }
-
-            Product product = new Product();
-            product.setName(productCreateRequest.getName());
-            product.setCode(productCreateRequest.getCode());
-            product.setCategory(productCreateRequest.getCategory());
-            product.setPrice(productCreateRequest.getPrice());
-            product.setQuantity(productCreateRequest.getQuantity());
-            product.setMinimumStock(productCreateRequest.getMinimumStock());
-
-            Product savedProduct = productRepository.save(product);
-
-            return new ProductResponse(
-                    savedProduct.getId(),
-                    savedProduct.getName(),
-                    savedProduct.getCode(),
-                    savedProduct.getCategory(),
-                    savedProduct.getPrice(),
-                    savedProduct.getQuantity(),
-                    savedProduct.getMinimumStock(),
-                    savedProduct.getCreatedAt(),
-                    savedProduct.getUpdatedAt()
-            );
-    }
-
-    public List<ProductResponse> findAll(){
-        return productRepository.findAll()
-                .stream()
-                .map(product -> new ProductResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getCode(),
-                        product.getCategory(),
-                        product.getPrice(),
-                        product.getQuantity(),
-                        product.getMinimumStock(),
-                        product.getCreatedAt(),
-                        product.getUpdatedAt()
-                ))
-                .toList();
-    }
-
-    public ProductResponse findById(UUID id){
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
-
+    private ProductResponse toResponse(Product product) {
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
@@ -80,7 +34,38 @@ public class ProductService {
         );
     }
 
-    public ProductResponse update(UUID id, ProductUpdateRequest request){
+    public ProductResponse create(ProductCreateRequest productCreateRequest) {
+        if (productRepository.findByCode(productCreateRequest.getCode()).isPresent()) {
+            throw new ProductAlreadyExistsException("Product with code " + productCreateRequest.getCode() + " already exists.");
+        }
+
+        Product product = new Product();
+        product.setName(productCreateRequest.getName());
+        product.setCode(productCreateRequest.getCode());
+        product.setCategory(productCreateRequest.getCategory());
+        product.setPrice(productCreateRequest.getPrice());
+        product.setQuantity(productCreateRequest.getQuantity());
+        product.setMinimumStock(productCreateRequest.getMinimumStock());
+
+        Product savedProduct = productRepository.save(product);
+
+        return toResponse(savedProduct);
+    }
+
+    public Page<ProductResponse> findAll(Pageable pageable) {
+        return productRepository
+                .findAll(pageable)
+                .map(this::toResponse);
+    }
+
+    public ProductResponse findById(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
+
+        return toResponse(product);
+    }
+
+    public ProductResponse update(UUID id, ProductUpdateRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
 
@@ -101,20 +86,10 @@ public class ProductService {
 
         Product updatedProduct = productRepository.save(product);
 
-        return new ProductResponse(
-                updatedProduct.getId(),
-                updatedProduct.getName(),
-                updatedProduct.getCode(),
-                updatedProduct.getCategory(),
-                updatedProduct.getPrice(),
-                updatedProduct.getQuantity(),
-                updatedProduct.getMinimumStock(),
-                updatedProduct.getCreatedAt(),
-                updatedProduct.getUpdatedAt()
-        );
+        return toResponse(updatedProduct);
     }
 
-    public void delete(UUID id){
+    public void delete(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException("Product with id " + id + " not found."));
 
@@ -124,17 +99,7 @@ public class ProductService {
     public List<ProductResponse> findLowStockProducts() {
         return productRepository.findLowStockProducts()
                 .stream()
-                .map(product -> new ProductResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getCode(),
-                        product.getCategory(),
-                        product.getPrice(),
-                        product.getQuantity(),
-                        product.getMinimumStock(),
-                        product.getCreatedAt(),
-                        product.getUpdatedAt()
-                ))
+                .map(this::toResponse)
                 .toList();
     }
 }
