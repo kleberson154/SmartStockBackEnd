@@ -1,10 +1,16 @@
-# SmartStock API
+# SmartStock Backend
 
-API REST para gerenciamento de estoque desenvolvida com **Java e Spring Boot**.
+API REST para gerenciamento de estoque, produtos e movimentações, desenvolvida com Java e Spring Boot.
 
-O SmartStock permite gerenciar produtos, controlar entradas e saídas de estoque, consultar produtos com estoque baixo e
-manter um histórico de movimentações. A aplicação também possui autenticação baseada em **JWT** e controle de acesso por
-perfis de usuário.
+O backend do SmartStock fornece autenticação JWT, controle de acesso por perfil, gerenciamento de produtos, controle de entradas e saídas de estoque, identificação de produtos com estoque baixo, paginação, validações, documentação com Swagger e persistência em PostgreSQL.
+
+## 🌐 Aplicação em produção
+
+**API:**
+https://smartstock-api-4jx3.onrender.com
+
+**Swagger / OpenAPI:**
+https://smartstock-api-4jx3.onrender.com/swagger-ui.html
 
 ## 🚀 Tecnologias
 
@@ -16,189 +22,281 @@ perfis de usuário.
 * JWT
 * PostgreSQL
 * Flyway
-* Docker
-* Maven
 * Bean Validation
-* Swagger / OpenAPI
-* JUnit 5
+* Lombok
+* SpringDoc OpenAPI / Swagger
+* Maven
+* Docker
+* JUnit
 * Mockito
 
-## 📦 Funcionalidades
+## 📌 Funcionalidades
+
+### Autenticação e segurança
+
+* Cadastro de usuários
+* Login com e-mail e senha
+* Autenticação utilizando JWT
+* Senhas criptografadas com BCrypt
+* Controle de acesso por perfil
+* Perfis `USER` e `ADMIN`
+* Proteção de endpoints com Spring Security
+* Configuração CORS para frontend local e produção
 
 ### Produtos
 
 * Cadastro de produtos
-* Listagem de produtos
-* Busca de produto por ID
-* Atualização de produtos
+* Listagem paginada
+* Busca por ID
+* Atualização de informações
 * Exclusão de produtos
 * Validação de código único
 * Consulta de produtos com estoque baixo
 
-### Movimentações de estoque
+Após o cadastro inicial, a quantidade de um produto não pode ser alterada diretamente pela edição do produto.
 
-O estoque é atualizado através de movimentações.
-
-**ENTRY**
-
-* Registra entrada de produtos
-* Aumenta automaticamente a quantidade disponível
-
-**EXIT**
-
-* Registra saída de produtos
-* Reduz automaticamente a quantidade disponível
-* Impede saídas maiores que o estoque atual
-
-Também é possível consultar:
-
-* todas as movimentações;
-* histórico de movimentações de um produto específico.
-
-## 🔐 Autenticação e autorização
-
-A API utiliza autenticação baseada em **JWT (JSON Web Token)**.
-
-Existem dois níveis de acesso:
-
-### USER
-
-Pode:
-
-* consultar produtos;
-* consultar produtos com estoque baixo;
-* registrar movimentações;
-* consultar histórico de movimentações.
-
-### ADMIN
-
-Possui as permissões de USER e também pode:
-
-* cadastrar produtos;
-* atualizar produtos;
-* excluir produtos.
-
-Novos usuários cadastrados pela API recebem automaticamente o perfil `USER`.
-
-## 🛣️ Principais endpoints
-
-### Autenticação
-
-| Método | Endpoint             | Descrição         |
-|--------|----------------------|-------------------|
-| POST   | `/api/auth/register` | Cadastrar usuário |
-| POST   | `/api/auth/login`    | Realizar login    |
-
-### Produtos
-
-| Método | Endpoint                  | Permissão    | Descrição                  |
-|--------|---------------------------|--------------|----------------------------|
-| GET    | `/api/products`           | USER / ADMIN | Listar produtos            |
-| GET    | `/api/products/{id}`      | USER / ADMIN | Buscar produto             |
-| GET    | `/api/products/low-stock` | USER / ADMIN | Produtos com estoque baixo |
-| POST   | `/api/products`           | ADMIN        | Cadastrar produto          |
-| PUT    | `/api/products/{id}`      | ADMIN        | Atualizar produto          |
-| DELETE | `/api/products/{id}`      | ADMIN        | Excluir produto            |
+Toda mudança no estoque deve ser registrada por meio de uma movimentação.
 
 ### Movimentações
 
-| Método | Endpoint                             | Permissão    | Descrição              |
-|--------|--------------------------------------|--------------|------------------------|
-| GET    | `/api/movements`                     | USER / ADMIN | Listar movimentações   |
-| GET    | `/api/movements/product/{productId}` | USER / ADMIN | Histórico do produto   |
-| POST   | `/api/movements`                     | USER / ADMIN | Registrar movimentação |
+* Registro de entrada de estoque (`ENTRY`)
+* Registro de saída de estoque (`EXIT`)
+* Validação de estoque disponível
+* Histórico de movimentações
+* Consulta de movimentações por produto
+* Listagem paginada
+* Ordenação pelas movimentações mais recentes
 
-## 📖 Swagger / OpenAPI
+## 🧠 Regras de negócio
 
-Com a aplicação em execução, a documentação interativa da API pode ser acessada pelo Swagger UI:
+O SmartStock mantém o histórico das alterações realizadas no estoque.
+
+Uma entrada aumenta a quantidade disponível:
 
 ```text
-http://localhost:8080/swagger
+Estoque atual + quantidade da movimentação
 ```
 
-Para testar endpoints protegidos:
-
-1. faça login em `/api/auth/login`;
-2. copie o JWT retornado;
-3. clique em **Authorize**;
-4. informe o token;
-5. execute os endpoints protegidos.
-
-O Swagger adicionará automaticamente o header:
+Uma saída reduz a quantidade:
 
 ```text
-Authorization: Bearer <token>
+Estoque atual - quantidade da movimentação
+```
+
+Caso uma saída seja maior que a quantidade disponível, a operação é rejeitada.
+
+Produtos são considerados com estoque baixo quando:
+
+```text
+quantity <= minimumStock
+```
+
+## 🔐 Permissões
+
+| Operação                 | USER | ADMIN |
+| ------------------------ | :--: | :---: |
+| Visualizar produtos      |   ✅  |   ✅   |
+| Visualizar movimentações |   ✅  |   ✅   |
+| Registrar movimentações  |   ✅  |   ✅   |
+| Visualizar estoque baixo |   ✅  |   ✅   |
+| Criar produtos           |   ❌  |   ✅   |
+| Editar produtos          |   ❌  |   ✅   |
+| Excluir produtos         |   ❌  |   ✅   |
+
+## 📂 Estrutura principal
+
+```text
+src/main/java/com/kleberson/SmartStock
+├── config
+├── controller
+├── dto
+├── entity
+├── enums
+├── exception
+├── repository
+├── service
+└── SmartStockApplication.java
 ```
 
 ## 🗄️ Banco de dados
 
-O projeto utiliza **PostgreSQL**.
+O projeto utiliza PostgreSQL.
 
-Durante o desenvolvimento, o banco pode ser executado através do Docker.
+A estrutura do banco é versionada com Flyway, permitindo reproduzir as alterações do schema automaticamente em diferentes ambientes.
+
+Principais entidades:
+
+```text
+User
+Product
+Movement
+```
+
+Relacionamento principal:
+
+```text
+Product 1 ─────── N Movement
+```
+
+## 🔄 Fluxo de movimentação
+
+```text
+Cliente
+   ↓
+POST /api/movements
+   ↓
+MovementController
+   ↓
+MovementService
+   ↓
+Busca produto
+   ↓
+Valida operação
+   ↓
+Atualiza estoque
+   ↓
+Registra movimentação
+   ↓
+PostgreSQL
+```
+
+## 🔑 Autenticação
+
+Após realizar login, a API retorna um JWT.
 
 Exemplo:
 
+```http
+POST /api/auth/login
+```
+
+```json
+{
+  "email": "usuario@email.com",
+  "password": "senha"
+}
+```
+
+O token deve ser enviado nas requisições protegidas:
+
+```http
+Authorization: Bearer SEU_TOKEN
+```
+
+O Swagger também possui suporte ao Bearer Token por meio do botão **Authorize**.
+
+## 📄 Principais endpoints
+
+### Autenticação
+
+```http
+POST /api/auth/register
+POST /api/auth/login
+```
+
+### Produtos
+
+```http
+GET    /api/products
+GET    /api/products/{id}
+POST   /api/products
+PUT    /api/products/{id}
+DELETE /api/products/{id}
+
+GET /api/products/low-stock
+```
+
+### Movimentações
+
+```http
+GET  /api/movements
+POST /api/movements
+
+GET /api/movements/product/{productId}
+```
+
+## 📑 Paginação
+
+Produtos e movimentações possuem paginação.
+
+Exemplo:
+
+```http
+GET /api/products?page=0&size=10
+```
+
+```http
+GET /api/movements?page=0&size=10
+```
+
+A resposta segue o padrão de `Page` do Spring Data:
+
+```json
+{
+  "content": [],
+  "totalElements": 0,
+  "totalPages": 0,
+  "size": 10,
+  "number": 0,
+  "first": true,
+  "last": true
+}
+```
+
+## ⚠️ Tratamento de erros
+
+A API possui tratamento global de exceções.
+
+Entre os principais cenários tratados estão:
+
+* Produto não encontrado
+* Produto com código duplicado
+* E-mail já cadastrado
+* Credenciais inválidas
+* Estoque insuficiente
+* Dados inválidos
+* Acesso não autorizado
+
+Exemplo:
+
+```json
+{
+  "status": 409,
+  "message": "Insufficient stock",
+  "timestamp": "2026-09-04T10:00:00"
+}
+```
+
+## 🧪 Testes
+
+O projeto possui testes unitários utilizando JUnit e Mockito.
+
+Foram implementados testes para:
+
+* Cadastro de produto
+* Código de produto duplicado
+* Busca de produto
+* Atualização de produto
+* Exclusão de produto
+* Estoque baixo
+* Entrada de estoque
+* Saída de estoque
+* Estoque insuficiente
+* Produto inexistente em movimentações
+
+Para executar:
+
 ```bash
-docker run \
-  --name smartstock-postgres \
-  -e POSTGRES_DB=smartstock \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  -d postgres
+./mvnw test
 ```
 
-## 🔄 Flyway
+No Windows:
 
-O versionamento do banco de dados é realizado com **Flyway**.
-
-As migrations estão localizadas em:
-
-```text
-src/main/resources/db/migration
+```bash
+mvnw.cmd test
 ```
 
-Ao iniciar a aplicação, o Flyway verifica e aplica automaticamente as migrations pendentes.
-
-## ⚙️ Configuração
-
-O projeto possui perfis separados para desenvolvimento e produção:
-
-```text
-application.yml
-application-dev.yml
-application-prod.yml
-```
-
-Por padrão, a aplicação utiliza o perfil `dev`.
-
-O perfil pode ser alterado através da variável:
-
-```text
-SPRING_PROFILES_ACTIVE=prod
-```
-
-### Variáveis de ambiente de produção
-
-Configure:
-
-```text
-DB_URL
-DB_USERNAME
-DB_PASSWORD
-JWT_SECRET
-```
-
-Variáveis opcionais:
-
-```text
-PORT
-JWT_EXPIRATION
-```
-
-Nenhuma credencial de produção deve ser armazenada no repositório.
-
-## ▶️ Executando o projeto
+## ▶️ Executando localmente
 
 ### Pré-requisitos
 
@@ -206,7 +304,7 @@ Nenhuma credencial de produção deve ser armazenada no repositório.
 * Docker
 * Git
 
-Clone o repositório:
+Clone o projeto:
 
 ```bash
 git clone https://github.com/kleberson154/SmartStockBackEnd.git
@@ -218,126 +316,113 @@ Entre na pasta:
 cd SmartStockBackEnd
 ```
 
-Inicie o PostgreSQL.
+Configure um PostgreSQL local.
 
-Depois execute:
+Exemplo:
 
-### Windows
-
-```powershell
-.\mvnw.cmd spring-boot:run
+```text
+Database: smartstock
+Username: postgres
+Password: postgres
+Port: 5432
 ```
 
-### Linux / macOS
+Execute:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-A API estará disponível em:
+No Windows:
+
+```bash
+mvnw.cmd spring-boot:run
+```
+
+A aplicação ficará disponível em:
 
 ```text
 http://localhost:8080
 ```
 
-## 🧪 Testes
-
-O projeto possui testes unitários utilizando **JUnit 5 e Mockito** para validar as principais regras de negócio.
-
-Entre os cenários testados estão:
-
-* criação de produtos;
-* código de produto duplicado;
-* atualização de produtos;
-* produto inexistente;
-* entrada de estoque;
-* saída de estoque;
-* tentativa de saída com estoque insuficiente;
-* movimentação para produto inexistente;
-* exclusão de produtos;
-* consulta de estoque baixo.
-
-Execute os testes:
-
-### Windows
-
-```powershell
-.\mvnw.cmd test
-```
-
-### Linux / macOS
-
-```bash
-./mvnw test
-```
-
-Para validar e gerar o pacote completo:
-
-```bash
-./mvnw clean package
-```
-
-## 🧱 Arquitetura
-
-O backend segue uma separação em camadas:
+Swagger:
 
 ```text
-Controller
-    ↓
-Service
-    ↓
-Repository
-    ↓
-PostgreSQL
+http://localhost:8080/swagger-ui.html
 ```
 
-A aplicação também utiliza DTOs para separar os modelos persistidos das estruturas utilizadas nas requisições e
-respostas da API.
+## ⚙️ Variáveis de ambiente
 
-Estrutura principal:
+Em produção, o projeto utiliza variáveis de ambiente:
+
+```env
+SPRING_PROFILES_ACTIVE=prod
+
+DB_URL=jdbc:postgresql://host:5432/database
+DB_USERNAME=username
+DB_PASSWORD=password
+
+JWT_SECRET=your-secret
+JWT_EXPIRATION=86400000
+```
+
+Nenhuma credencial de produção deve ser versionada no GitHub.
+
+## 🐳 Docker
+
+O backend possui suporte a Docker e é utilizado dessa forma no ambiente de produção.
+
+Build:
+
+```bash
+docker build -t smartstock-api .
+```
+
+Execução:
+
+```bash
+docker run -p 8080:8080 smartstock-api
+```
+
+## ☁️ Deploy
+
+A aplicação está distribuída da seguinte forma:
 
 ```text
-src/main/java/com/kleberson/SmartStock
-├── config
-├── controller
-├── dto
-├── entity
-├── enums
-├── exception
-├── repository
-├── security
-└── service
+React / Vercel
+      ↓
+SmartStock API / Render
+      ↓
+PostgreSQL / Render
 ```
 
-## ⚠️ Tratamento de erros
-
-A API possui tratamento global de exceções e retorna respostas HTTP adequadas para diferentes situações, incluindo:
-
-* `400 Bad Request` — dados de entrada inválidos;
-* `401 Unauthorized` — credenciais inválidas;
-* `403 Forbidden` — usuário sem permissão;
-* `404 Not Found` — recurso não encontrado;
-* `409 Conflict` — conflito de dados, estoque insuficiente ou recurso duplicado.
+O Flyway executa as migrations automaticamente durante a inicialização do backend.
 
 ## 🎯 Objetivo do projeto
 
-O SmartStock foi desenvolvido como projeto de portfólio com o objetivo de aplicar conceitos utilizados no
-desenvolvimento de APIs REST profissionais, incluindo:
+O SmartStock foi desenvolvido como projeto de portfólio com o objetivo de aplicar conceitos utilizados em aplicações backend reais, incluindo:
 
-* arquitetura em camadas;
-* regras de negócio;
-* persistência com JPA/Hibernate;
-* migrations de banco de dados;
-* autenticação JWT;
-* autorização baseada em roles;
-* validação de dados;
-* tratamento global de exceções;
-* documentação de API;
-* testes unitários;
-* configuração separada por ambiente.
+* APIs REST
+* Arquitetura em camadas
+* Autenticação e autorização
+* Regras de negócio
+* Persistência de dados
+* Migrations
+* Tratamento global de erros
+* Validações
+* Paginação
+* Testes
+* Containerização
+* Deploy em cloud
+* Integração frontend/backend
 
 ## 👨‍💻 Autor
 
 **Kleberson Andrade**
 
-GitHub: `kleberson154`
+GitHub:
+https://github.com/kleberson154
+
+## 📜 Licença
+
+Projeto desenvolvido para fins de estudo e portfólio.
