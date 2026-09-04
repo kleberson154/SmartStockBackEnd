@@ -1,5 +1,6 @@
 package com.kleberson.SmartStock.dto.product;
 
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,10 +13,24 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductUpdateRequest {
+
+    @NotBlank
+    @Size(max = 100)
     private String name;
+
+    @NotBlank
+    @Size(max = 50)
     private String code;
+
+    @NotBlank
+    @Size(max = 30)
     private String category;
+
+    @NotNull
+    @Positive
     private BigDecimal price;
-    private Integer quantity;
+
+    @NotNull
+    @PositiveOrZero
     private Integer minimumStock;
 }

@@ -33,7 +33,7 @@ public class ProductServiceTest {
     private Product product;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         productService = new ProductService(productRepository);
 
         product = new Product();
@@ -46,7 +46,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenProductNotFound(){
+    void shouldThrowExceptionWhenProductNotFound() {
         UUID uuid = UUID.randomUUID();
 
         when(productRepository.findById(uuid)).thenReturn(Optional.empty());
@@ -60,7 +60,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenProductCodeAlreadyExists(){
+    void shouldThrowExceptionWhenProductCodeAlreadyExists() {
         ProductCreateRequest request = new ProductCreateRequest();
         request.setName("Teclado");
         request.setCode("TEC-001");
@@ -81,7 +81,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void shouldCreateProductSuccessfully(){
+    void shouldCreateProductSuccessfully() {
         ProductCreateRequest request = new ProductCreateRequest();
         request.setName("Teclado");
         request.setCode("TEC-001");
@@ -108,7 +108,7 @@ public class ProductServiceTest {
     }
 
     @Test
-    void shouldUpdateProductSuccessfully(){
+    void shouldUpdateProductSuccessfully() {
         UUID productId = UUID.randomUUID();
         product.setId(productId);
 
@@ -120,7 +120,6 @@ public class ProductServiceTest {
         request.setCode("TEC-001");
         request.setCategory("Periferico");
         request.setPrice(new BigDecimal("299.90"));
-        request.setQuantity(15);
         request.setMinimumStock(5);
 
         ProductResponse updatedProduct = productService.update(productId, request);
@@ -129,14 +128,13 @@ public class ProductServiceTest {
         assertEquals(request.getCode(), updatedProduct.getCode());
         assertEquals(request.getCategory(), updatedProduct.getCategory());
         assertEquals(request.getPrice(), updatedProduct.getPrice());
-        assertEquals(request.getQuantity(), updatedProduct.getQuantity());
         assertEquals(request.getMinimumStock(), updatedProduct.getMinimumStock());
 
         verify(productRepository).save(any(Product.class));
     }
 
     @Test
-    void shouldUpdateProductNotFoundException(){
+    void shouldUpdateProductNotFoundException() {
         UUID productId = UUID.randomUUID();
 
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
@@ -146,7 +144,6 @@ public class ProductServiceTest {
         request.setCode("TEC-001");
         request.setCategory("Periferico");
         request.setPrice(new BigDecimal("299.90"));
-        request.setQuantity(15);
         request.setMinimumStock(5);
 
         assertThrows(
@@ -172,7 +169,6 @@ public class ProductServiceTest {
         request.setCode("MOUSE-001");
         request.setCategory("Periferico");
         request.setPrice(new BigDecimal("299.90"));
-        request.setQuantity(15);
         request.setMinimumStock(5);
 
         when(productRepository.findById(productId))
@@ -200,7 +196,6 @@ public class ProductServiceTest {
         request.setCode("TEC-001");
         request.setCategory("Periferico");
         request.setPrice(new BigDecimal("299.90"));
-        request.setQuantity(15);
         request.setMinimumStock(5);
 
         when(productRepository.findById(productId))

@@ -81,7 +81,6 @@ public class ProductService {
         product.setCode(request.getCode());
         product.setCategory(request.getCategory());
         product.setPrice(request.getPrice());
-        product.setQuantity(request.getQuantity());
         product.setMinimumStock(request.getMinimumStock());
 
         Product updatedProduct = productRepository.save(product);
